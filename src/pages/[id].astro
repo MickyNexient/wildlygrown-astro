@@ -1,0 +1,39 @@
+---
+import { createClient } from "@supabase/supabase-js";
+
+import Layout from "../layouts/Layout.astro";
+
+export const supabase = createClient(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_KEY
+);
+
+export async function getStaticPaths() {
+    const { data, error } = await supabase.storage
+        .from("public")
+        .list("photos", {
+            limit: 100,
+            offset: 0,
+            sortBy: { column: "name", order: "asc" },
+        });
+
+    return data?.map((file) => {
+        return {
+            params: { id: file.id },
+            props: { file },
+        };
+    });
+}
+
+const { id } = Astro.params;
+const { file } = Astro.props;
+
+const { publicURL, error } = supabase.storage
+    .from("public")
+    .getPublicUrl(`photos/${file.name}`);
+---
+
+<Layout title={`Product ${id}`}>
+    <a href="/">Back</a>
+    <img src={publicURL} />
+</Layout>
